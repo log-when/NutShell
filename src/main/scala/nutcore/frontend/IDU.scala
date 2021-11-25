@@ -157,12 +157,12 @@ class Decoder(implicit val p: NutCoreConfig) extends NutCoreModule with HasInstr
 
   //output signals
   io.out.valid := io.in.valid
-  io.in.ready := !io.in.valid || io.out.fire() && !hasIntr
+  io.in.ready := !io.in.valid || io.out.fire && !hasIntr
   io.out.bits.cf <> io.in.bits
   // fix c_break
 
 
-  Debug(io.out.fire(), "issue: pc %x npc %x instr %x\n", io.out.bits.cf.pc, io.out.bits.cf.pnpc, io.out.bits.cf.instr)
+  Debug(io.out.fire, "issue: pc %x npc %x instr %x\n", io.out.bits.cf.pc, io.out.bits.cf.pnpc, io.out.bits.cf.instr)
 
   val intrVec = WireInit(0.U(12.W))
   BoringUtils.addSink(intrVec, "intrVecIDU")
