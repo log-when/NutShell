@@ -63,8 +63,14 @@ object TopMain extends App {
       println(f + " = " + v)
   }
   if (board == "sim") {
-    Driver.execute(args, () => new NutShellSimTop)
+    (new chisel3.stage.ChiselStage).execute(
+      args,
+      Seq(chisel3.stage.ChiselGeneratorAnnotation(() => new NutShellSimTop))
+    )
   } else {
-    Driver.execute(args, () => new Top)
+    (new chisel3.stage.ChiselStage).execute(
+      args,
+      Seq(chisel3.stage.ChiselGeneratorAnnotation(() => new Top))
+    )
   }
 }

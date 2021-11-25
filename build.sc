@@ -10,6 +10,8 @@ trait HasXsource211 extends ScalaModule {
     super.scalacOptions() ++ Seq(
       "-deprecation",
       "-unchecked",
+      "-feature",
+      "-language:reflectiveCalls",
       "-Xsource:2.11"
     )
   }
