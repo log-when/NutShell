@@ -84,7 +84,7 @@ sealed trait HasCacheConst {
 }
 
 sealed abstract class CacheBundle(implicit cacheConfig: CacheConfig) extends Bundle with HasNutCoreParameter with HasCacheConst
-sealed abstract class CacheModule(implicit cacheConfig: CacheConfig) extends Module with HasNutCoreParameter with HasCacheConst with HasNutCoreLog
+sealed abstract class CacheModule(implicit cacheConfig: CacheConfig) extends Module with HasNutCoreParameter with HasCacheConst with HasNutCoreLog with HasBundleIo
 
 sealed class MetaBundle(implicit val cacheConfig: CacheConfig) extends CacheBundle {
   val tag = Output(UInt(TagBits.W))
