@@ -18,19 +18,23 @@ trait HasXsource211 extends ScalaModule {
 }
 
 trait HasChisel3 extends ScalaModule {
-   override def repositoriesTask = T.task {
+  override def repositoriesTask = T.task {
     super.repositoriesTask() ++ Seq(
       MavenRepository("https://oss.sonatype.org/content/repositories/snapshots")
     )
   }
-   override def ivyDeps = Agg(
-    ivy"edu.berkeley.cs::chisel3:3.5.0-RC1"
- )
+  override def ivyDeps = Agg(
+    ivy"edu.berkeley.cs::chisel3:3.5-SNAPSHOT"
+  )
 }
 
-trait HasChiselTests extends CrossSbtModule  {
+trait HasChiselTests extends CrossSbtModule {
   object test extends Tests {
-    override def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.4", ivy"edu.berkeley.cs::chisel-iotesters:1.2+")
+    override def ivyDeps = Agg(
+      ivy"org.scalatest::scalatest:3.0.4",
+      ivy"edu.berkeley.cs::chisel-iotesters:1.2+",
+      ivy"edu.berkeley.cs::chiseltest:0.5-SNAPSHOT"
+    )
     def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 }
@@ -45,4 +49,3 @@ object chiselModule extends CrossSbtModule with HasChisel3 with HasChiselTests w
     difftest
   )
 }
-
