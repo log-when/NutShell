@@ -207,6 +207,7 @@ class IDU(implicit val p: NutCoreConfig) extends NutCoreModule with HasInstrType
 
   val checkpoint_id = RegInit(0.U(64.W))
 
+  /*
   // debug runahead
   val runahead = Module(new DifftestRunaheadEvent)
   runahead.io.clock         := clock
@@ -218,6 +219,7 @@ class IDU(implicit val p: NutCoreConfig) extends NutCoreModule with HasInstrType
   when(runahead.io.valid && runahead.io.branch) {
     checkpoint_id := checkpoint_id + 1.U // allocate a new checkpoint_id
   }
+  */
   io.out(0).bits.cf.isBranch := decoder1.io.isBranch
   io.out(0).bits.cf.runahead_checkpoint_id := checkpoint_id
   // when(runahead.io.valid) {

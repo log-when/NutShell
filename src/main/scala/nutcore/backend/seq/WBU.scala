@@ -38,6 +38,7 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   io.redirect := io.in.bits.decode.cf.redirect
   io.redirect.valid := io.in.bits.decode.cf.redirect.valid && io.in.valid
   
+  /*
   val runahead_redirect = Module(new DifftestRunaheadRedirectEvent)
   runahead_redirect.io.clock := clock
   runahead_redirect.io.coreid := 0.U
@@ -45,6 +46,7 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   runahead_redirect.io.pc := io.in.bits.decode.cf.pc // for debug only
   runahead_redirect.io.target_pc := io.in.bits.decode.cf.redirect.target // for debug only
   runahead_redirect.io.checkpoint_id := io.in.bits.decode.cf.runahead_checkpoint_id // make sure it is right
+  */
 
   // when(runahead_redirect.io.valid) {
   //   printf("DUT pc %x redirect to %x cpid %x\n", runahead_redirect.io.pc, runahead_redirect.io.target_pc, runahead_redirect.io.checkpoint_id)
@@ -89,10 +91,12 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
     //   printf("DUT commit branch %x\n", runahead_commit.io.pc)
     // }
   } else {
+    /*
     BoringUtils.addSource(io.in.valid, "ilaWBUvalid")
     BoringUtils.addSource(io.in.bits.decode.cf.pc, "ilaWBUpc")
     BoringUtils.addSource(io.wb.rfWen, "ilaWBUrfWen")
     BoringUtils.addSource(io.wb.rfDest, "ilaWBUrfDest")
     BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
+    */
   }
 }
