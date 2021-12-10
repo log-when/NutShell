@@ -89,10 +89,12 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
     //   printf("DUT commit branch %x\n", runahead_commit.io.pc)
     // }
   } else {
-    BoringUtils.addSource(io.in.valid, "ilaWBUvalid")
-    BoringUtils.addSource(io.in.bits.decode.cf.pc, "ilaWBUpc")
-    BoringUtils.addSource(io.wb.rfWen, "ilaWBUrfWen")
-    BoringUtils.addSource(io.wb.rfDest, "ilaWBUrfDest")
-    BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
+    if (p.EnableILA) {
+      BoringUtils.addSource(io.in.valid, "ilaWBUvalid")
+      BoringUtils.addSource(io.in.bits.decode.cf.pc, "ilaWBUpc")
+      BoringUtils.addSource(io.wb.rfWen, "ilaWBUrfWen")
+      BoringUtils.addSource(io.wb.rfDest, "ilaWBUrfDest")
+      BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
+    }
   }
 }

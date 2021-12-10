@@ -924,7 +924,9 @@ class CSR(implicit val p: NutCoreConfig) extends NutCoreModule with HasCSRConst{
       BoringUtils.addSource(readWithScala(perfCntList("Mcycle")._1), "simCycleCnt")
       BoringUtils.addSource(readWithScala(perfCntList("Minstret")._1), "simInstrCnt")
     } else {
-      BoringUtils.addSource(readWithScala(perfCntList("Minstret")._1), "ilaInstrCnt")
+      if (p.EnableILA) {
+        BoringUtils.addSource(readWithScala(perfCntList("Minstret")._1), "ilaInstrCnt")
+      }
     }
   }
 }
