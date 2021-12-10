@@ -38,18 +38,6 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   io.redirect := io.in.bits.decode.cf.redirect
   io.redirect.valid := io.in.bits.decode.cf.redirect.valid && io.in.valid
   
-  val runahead_redirect = Module(new DifftestRunaheadRedirectEvent)
-  runahead_redirect.io.clock := clock
-  runahead_redirect.io.coreid := 0.U
-  runahead_redirect.io.valid := io.redirect.valid
-  runahead_redirect.io.pc := io.in.bits.decode.cf.pc // for debug only
-  runahead_redirect.io.target_pc := io.in.bits.decode.cf.redirect.target // for debug only
-  runahead_redirect.io.checkpoint_id := io.in.bits.decode.cf.runahead_checkpoint_id // make sure it is right
-
-  // when(runahead_redirect.io.valid) {
-  //   printf("DUT pc %x redirect to %x cpid %x\n", runahead_redirect.io.pc, runahead_redirect.io.target_pc, runahead_redirect.io.checkpoint_id)
-  // }
-
   Debug(io.in.valid, "[COMMIT] pc = 0x%x inst %x wen %x wdst %x wdata %x mmio %x intrNO %x\n", io.in.bits.decode.cf.pc, io.in.bits.decode.cf.instr, io.wb.rfWen, io.wb.rfDest, io.wb.rfData, io.in.bits.isMMIO, io.in.bits.intrNO)
 
   val falseWire = WireInit(false.B) // make BoringUtils.addSource happy
@@ -57,6 +45,18 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   BoringUtils.addSource(falseWire, "perfCntCondMultiCommit")
   
   if (!p.FPGAPlatform) {
+    val runahead_redirect = Module(new DifftestRunaheadRedirectEvent)
+    runahead_redirect.io.clock := clock
+    runahead_redirect.io.coreid := 0.U
+    runahead_redirect.io.valid := io.redirect.valid
+    runahead_redirect.io.pc := io.in.bits.decode.cf.pc // for debug only
+    runahead_redirect.io.target_pc := io.in.bits.decode.cf.redirect.target // for debug only
+    runahead_redirect.io.checkpoint_id := io.in.bits.decode.cf.runahead_checkpoint_id // make sure it is right
+
+    // when(runahead_redirect.io.valid) {
+    //   printf("DUT pc %x redirect to %x cpid %x\n", runahead_redirect.io.pc, runahead_redirect.io.target_pc, runahead_redirect.io.checkpoint_id)
+    // }
+
     val difftest_commit = Module(new DifftestInstrCommit)
     difftest_commit.io.clock    := clock
     difftest_commit.io.coreid   := 0.U
