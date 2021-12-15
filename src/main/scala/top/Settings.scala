@@ -39,7 +39,19 @@ object DefaultSettings {
     "FPGAPlatform" -> false,
     "EnableILA" -> true,
     "EnableDebug" -> true,
-    "EnableRVC" -> true
+    "EnableRVC" -> true,
+
+    "Formal" -> false
+  )
+}
+
+object FormalSettings {
+  def apply() = Map(
+    "FPGAPlatform" -> true,
+    "NrExtIntr" -> 2,
+
+    "Formal" -> true,
+    "EnableILA" -> false,
   )
 }
 
