@@ -22,6 +22,10 @@ import chisel3.util.experimental.BoringUtils
 import utils._
 import difftest._
 
+import rvspeccore.checker.CheckerWithWB
+import rvspeccore.core.RiscvCore
+import rvspeccore.core.spec._
+
 class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new CommitIO))
@@ -95,6 +99,21 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
       BoringUtils.addSource(io.wb.rfWen, "ilaWBUrfWen")
       BoringUtils.addSource(io.wb.rfDest, "ilaWBUrfDest")
       BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
+    }
+    if (p.Formal) {
+      val checker = Module(new CheckerWithWB(new RiscvCore))
+
+      val tmpInst = io.in.bits.decode.cf.instr
+      // ADDI
+      assume(tmpInst(6, 0) === OpcodeMap("OP-IMM") && tmpInst(14, 12) === Funct3Map("ADDI"))
+
+      checker.io.inst  := io.in.bits.decode.cf.instr
+      checker.io.valid := io.in.valid
+      checker.io.pc    := SignExt(io.in.bits.decode.cf.pc, AddrBits)
+
+      checker.io.wb.valid := io.wb.rfWen && io.wb.rfDest =/= 0.U
+      checker.io.wb.dest  := io.wb.rfDest
+      checker.io.wb.data  := io.wb.rfData
     }
   }
 }
