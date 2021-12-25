@@ -106,9 +106,9 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
       // ADDI
       assume(tmpInst(6, 0) === OpcodeMap("OP-IMM") && tmpInst(14, 12) === Funct3Map("ADDI"))
 
-      checker.io.inst  := io.in.bits.decode.cf.instr
-      checker.io.valid := io.in.valid
-      checker.io.pc    := SignExt(io.in.bits.decode.cf.pc, AddrBits)
+      checker.io.instCommit.valid := io.in.valid
+      checker.io.instCommit.inst  := io.in.bits.decode.cf.instr
+      checker.io.instCommit.pc    := SignExt(io.in.bits.decode.cf.pc, AddrBits)
 
       checker.io.wb.valid := io.wb.rfWen && io.wb.rfDest =/= 0.U
       checker.io.wb.dest  := io.wb.rfDest
