@@ -101,7 +101,7 @@ class SimpleBusCrossbarNto1(n: Int, userBits:Int = 0) extends Module {
   val inputArb = Module(new LockingArbiter(chiselTypeOf(io.in(0).req.bits), n, 8, Some(lockWriteFun)))
   (inputArb.io.in zip io.in.map(_.req)).map{ case (arb, in) => arb <> in }
   val thisReq = inputArb.io.out
-  assert(!(thisReq.valid && !thisReq.bits.isRead() && !thisReq.bits.isWrite()))
+  //assert(!(thisReq.valid && !thisReq.bits.isRead() && !thisReq.bits.isWrite()))
   val inflightSrc = Reg(UInt(log2Up(n).W))
 
   io.out.req.bits := thisReq.bits

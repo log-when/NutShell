@@ -52,6 +52,13 @@ object FormalSettings {
 
     "Formal" -> true,
     "EnableILA" -> false,
+
+    "HasL2cache" -> false,
+    "HasPrefetch" -> false,
+    "HasDcache" -> false,
+    "HasIcache" -> false,
+    "MmodeOnly" -> true,
+    "EnableRVC" -> false
   )
 }
 
