@@ -47,6 +47,7 @@ object TopMain extends App {
   
   val s = (board match {
     case "sim"    => Nil
+    case "formal" => FormalSettings()
     case "pynq"   => PynqSettings()
     case "axu3cg" => Axu3cgSettings()
     case "PXIe"   => PXIeSettings()

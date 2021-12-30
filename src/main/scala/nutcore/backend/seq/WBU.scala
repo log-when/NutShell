@@ -22,6 +22,10 @@ import chisel3.util.experimental.BoringUtils
 import utils._
 import difftest._
 
+import rvspeccore.checker.CheckerWithWB
+import rvspeccore.core.{RiscvCore, RV64Config}
+import rvspeccore.core.spec._
+
 class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new CommitIO))
@@ -38,18 +42,6 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   io.redirect := io.in.bits.decode.cf.redirect
   io.redirect.valid := io.in.bits.decode.cf.redirect.valid && io.in.valid
   
-  val runahead_redirect = Module(new DifftestRunaheadRedirectEvent)
-  runahead_redirect.io.clock := clock
-  runahead_redirect.io.coreid := 0.U
-  runahead_redirect.io.valid := io.redirect.valid
-  runahead_redirect.io.pc := io.in.bits.decode.cf.pc // for debug only
-  runahead_redirect.io.target_pc := io.in.bits.decode.cf.redirect.target // for debug only
-  runahead_redirect.io.checkpoint_id := io.in.bits.decode.cf.runahead_checkpoint_id // make sure it is right
-
-  // when(runahead_redirect.io.valid) {
-  //   printf("DUT pc %x redirect to %x cpid %x\n", runahead_redirect.io.pc, runahead_redirect.io.target_pc, runahead_redirect.io.checkpoint_id)
-  // }
-
   Debug(io.in.valid, "[COMMIT] pc = 0x%x inst %x wen %x wdst %x wdata %x mmio %x intrNO %x\n", io.in.bits.decode.cf.pc, io.in.bits.decode.cf.instr, io.wb.rfWen, io.wb.rfDest, io.wb.rfData, io.in.bits.isMMIO, io.in.bits.intrNO)
 
   val falseWire = WireInit(false.B) // make BoringUtils.addSource happy
@@ -57,6 +49,18 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
   BoringUtils.addSource(falseWire, "perfCntCondMultiCommit")
   
   if (!p.FPGAPlatform) {
+    val runahead_redirect = Module(new DifftestRunaheadRedirectEvent)
+    runahead_redirect.io.clock := clock
+    runahead_redirect.io.coreid := 0.U
+    runahead_redirect.io.valid := io.redirect.valid
+    runahead_redirect.io.pc := io.in.bits.decode.cf.pc // for debug only
+    runahead_redirect.io.target_pc := io.in.bits.decode.cf.redirect.target // for debug only
+    runahead_redirect.io.checkpoint_id := io.in.bits.decode.cf.runahead_checkpoint_id // make sure it is right
+
+    // when(runahead_redirect.io.valid) {
+    //   printf("DUT pc %x redirect to %x cpid %x\n", runahead_redirect.io.pc, runahead_redirect.io.target_pc, runahead_redirect.io.checkpoint_id)
+    // }
+
     val difftest_commit = Module(new DifftestInstrCommit)
     difftest_commit.io.clock    := clock
     difftest_commit.io.coreid   := 0.U
@@ -88,10 +92,29 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
     //   printf("DUT commit branch %x\n", runahead_commit.io.pc)
     // }
   } else {
-    BoringUtils.addSource(io.in.valid, "ilaWBUvalid")
-    BoringUtils.addSource(io.in.bits.decode.cf.pc, "ilaWBUpc")
-    BoringUtils.addSource(io.wb.rfWen, "ilaWBUrfWen")
-    BoringUtils.addSource(io.wb.rfDest, "ilaWBUrfDest")
-    BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
+    if (p.EnableILA) {
+      BoringUtils.addSource(io.in.valid, "ilaWBUvalid")
+      BoringUtils.addSource(io.in.bits.decode.cf.pc, "ilaWBUpc")
+      BoringUtils.addSource(io.wb.rfWen, "ilaWBUrfWen")
+      BoringUtils.addSource(io.wb.rfDest, "ilaWBUrfDest")
+      BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
+    }
+    if (p.Formal) {
+      val checker = Module(new CheckerWithWB()(RV64Config()))
+
+      val tmpInst = io.in.bits.decode.cf.instr
+      // ADDI
+      when (io.in.valid){
+        assume(tmpInst(6, 0) === OpcodeMap("OP-IMM") && tmpInst(14, 12) === Funct3Map("ADDI"))
+      }
+
+      checker.io.instCommit.valid := io.in.valid
+      checker.io.instCommit.inst  := io.in.bits.decode.cf.instr
+      checker.io.instCommit.pc    := SignExt(io.in.bits.decode.cf.pc, AddrBits)
+
+      checker.io.wb.valid := io.wb.rfWen && io.wb.rfDest =/= 0.U
+      checker.io.wb.dest  := io.wb.rfDest
+      checker.io.wb.data  := io.wb.rfData
+    }
   }
 }

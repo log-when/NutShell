@@ -12,6 +12,8 @@ trait HasXsource211 extends ScalaModule {
     super.scalacOptions() ++ Seq(
       "-deprecation",
       "-unchecked",
+      "-feature",
+      "-language:reflectiveCalls",
       "-Xsource:2.11"
     )
   }
@@ -25,6 +27,10 @@ trait HasChisel3 extends ScalaModule {
   }
   override def ivyDeps = Agg(
     ivy"edu.berkeley.cs::chisel3:3.5-SNAPSHOT"
+  )
+  override def scalacPluginIvyDeps = Agg(
+    ivy"edu.berkeley.cs:::chisel3-plugin:3.5-SNAPSHOT",
+    ivy"org.scalamacros:::paradise:2.1.1"
   )
 }
 
@@ -43,9 +49,14 @@ object difftest extends SbtModule with CommonModule with HasChisel3 {
   override def millSourcePath = os.pwd / "difftest"
 }
 
+object riscvSpecCore extends SbtModule with CommonModule with HasChisel3 {
+  override def millSourcePath = os.pwd / "riscv-spec-core"
+}
+
 object chiselModule extends CrossSbtModule with HasChisel3 with HasChiselTests with HasXsource211 {
   def crossScalaVersion = "2.12.13"
   override def moduleDeps = super.moduleDeps ++ Seq(
-    difftest
+    difftest,
+    riscvSpecCore
   )
 }
