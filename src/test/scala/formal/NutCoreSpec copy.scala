@@ -8,7 +8,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import nutcore.{NutCore, NutCoreConfig}
 import top._
 
-class NutCoreSpec extends AnyFlatSpec with Formal with ChiselScalatestTester {
+class NutCoreSpec2 extends AnyFlatSpec with Formal with ChiselScalatestTester {
   behavior of "MyModule"
   it should "pass" in {
     // config
@@ -21,9 +21,9 @@ class NutCoreSpec extends AnyFlatSpec with Formal with ChiselScalatestTester {
         println(f + " = " + v)
     }
     // test
-    test(new NutCore()(NutCoreConfig())) { c => }
+    //test(new NutCore()(NutCoreConfig())) { c => }
 
     // verify
-    verify(new NutCore()(NutCoreConfig()), Seq(BoundedCheck(50), BtormcEngineAnnotation))
+    verify(new NutCore()(NutCoreConfig()), Seq(BoundedCheck(3), BtormcEngineAnnotation))
   }
 }

@@ -26,7 +26,12 @@ trait HasChisel3 extends ScalaModule {
     )
   }
   override def ivyDeps = Agg(
-    ivy"edu.berkeley.cs::chisel3:3.5-SNAPSHOT"
+    ivy"edu.berkeley.cs::chisel3:3.5-SNAPSHOT",
+    ivy"org.scalatest::scalatest:3.1.4",
+    ivy"edu.berkeley.cs::chisel-iotesters:1.2+",
+    ivy"com.lihaoyi::utest:0.7.9",
+    ivy"edu.berkeley.cs::treadle:1.5-SNAPSHOT",
+    ivy"net.java.dev.jna:jna:5.10.0"
   )
   override def scalacPluginIvyDeps = Agg(
     ivy"edu.berkeley.cs:::chisel3-plugin:3.5-SNAPSHOT",
@@ -37,9 +42,9 @@ trait HasChisel3 extends ScalaModule {
 trait HasChiselTests extends CrossSbtModule {
   object test extends Tests {
     override def ivyDeps = Agg(
-      ivy"org.scalatest::scalatest:3.0.4",
+      ivy"org.scalatest::scalatest:3.1.4",
       ivy"edu.berkeley.cs::chisel-iotesters:1.2+",
-      ivy"edu.berkeley.cs::chiseltest:0.5-SNAPSHOT"
+      //ivy"edu.berkeley.cs::chiseltest:0.5-SNAPSHOT"
     )
     def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
@@ -53,10 +58,16 @@ object riscvSpecCore extends SbtModule with CommonModule with HasChisel3 {
   override def millSourcePath = os.pwd / "riscv-spec-core"
 }
 
+object chiseltest extends SbtModule with CommonModule with HasChisel3 {
+  
+  override def millSourcePath = os.pwd / "chisel-testers2"
+}
+
 object chiselModule extends CrossSbtModule with HasChisel3 with HasChiselTests with HasXsource211 {
   def crossScalaVersion = "2.12.13"
   override def moduleDeps = super.moduleDeps ++ Seq(
-    difftest,
+    difftest,    
+    chiseltest,
     riscvSpecCore
   )
 }

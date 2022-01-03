@@ -25,6 +25,7 @@ import bus.simplebus._
 import top.Settings
 import difftest._
 
+import chiseltest.formal._
 trait HasResetVector {
   val resetVector = Settings.getLong("ResetVector")
 }
@@ -323,6 +324,9 @@ class IFU_inorder extends NutCoreModule with HasResetVector {
   val pcUpdate = io.redirect.valid || io.imem.req.fire
   val snpc = Mux(pc(1), pc + 2.U, pc + 4.U)  // sequential next pc
 
+
+  assert(TSequence(Seq(AtmProp(!pcUpdate),Implication(),TimeOp(1,30),AtmProp(pcUpdate))))
+  
   val bp1 = Module(new BPU_inorder)
 
   val crosslineJump = bp1.io.crosslineJump

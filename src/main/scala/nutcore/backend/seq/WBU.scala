@@ -101,7 +101,8 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
       BoringUtils.addSource(io.wb.rfData, "ilaWBUrfData")
     }
     if (p.Formal) {
-      val checker = Module(new CheckerWithWB(new RiscvCore))
+
+      /*val checker = Module(new CheckerWithWB(new RiscvCore))
 
       val tmpInst = io.in.bits.decode.cf.instr
       // ADDI
@@ -113,7 +114,7 @@ class WBU(implicit val p: NutCoreConfig) extends NutCoreModule{
 
       checker.io.wb.valid := io.wb.rfWen && io.wb.rfDest =/= 0.U
       checker.io.wb.dest  := io.wb.rfDest
-      checker.io.wb.data  := io.wb.rfData
+      checker.io.wb.data  := io.wb.rfData*/
     }
   }
 }
