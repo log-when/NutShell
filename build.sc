@@ -1,10 +1,12 @@
 import mill._, scalalib._
 import coursier.maven.MavenRepository
 
-trait CommonModule extends ScalaModule {
-  override def scalaVersion = "2.12.13"
+// import $ivy.`cn.ac.ios.tis:chisel3-plugin_2.13.8:3.6.0`
 
-  override def scalacOptions = Seq("-Xsource:2.11")
+trait CommonModule extends ScalaModule {
+  override def scalaVersion = "2.13.10"
+  override def scalacPluginIvyDeps = Agg(ivy"cn.ac.ios.tis:::chisel3-plugin:3.7-SNAPSHOT")
+  override def scalacOptions = Seq("-Xsource:2.13", "-P:chiselplugin:genBundleElements") 
 }
 
 trait HasXsource211 extends ScalaModule {
@@ -12,7 +14,7 @@ trait HasXsource211 extends ScalaModule {
     super.scalacOptions() ++ Seq(
       "-deprecation",
       "-unchecked",
-      "-Xsource:2.11"
+      "-Xsource:2.13"
     )
   }
 }
@@ -24,14 +26,24 @@ trait HasChisel3 extends ScalaModule {
     )
   }
    override def ivyDeps = Agg(
-    ivy"edu.berkeley.cs::chisel3:3.5.0-RC1"
+    ivy"cn.ac.ios.tis:chisel3_2.13:3.7-SNAPSHOT"
  )
 }
 
 trait HasChiselTests extends CrossSbtModule  {
   object test extends Tests {
-    override def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.4", ivy"edu.berkeley.cs::chisel-iotesters:1.2+")
-    def testFrameworks = Seq("org.scalatest.tools.Framework")
+    override def scalacPluginIvyDeps = Agg(ivy"cn.ac.ios.tis:::chisel3-plugin:3.7-SNAPSHOT")
+    override def scalacOptions = Seq("-Xsource:2.13", "-P:chiselplugin:genBundleElements") 
+
+    def unmanagedClasspath = T {
+      if (!os.exists(millSourcePath / "lib")) {Agg()}
+      else {Agg.from(os.list(millSourcePath / "lib" ).map(PathRef(_)))}
+    }
+
+    override def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.14", ivy"cn.ac.ios.tis:chiseltest_2.13:0.7-SNAPSHOT")
+    def testFramework = T {
+      "org.scalatest.tools.Framework"
+    }
   }
 }
 
@@ -40,7 +52,13 @@ object difftest extends SbtModule with CommonModule with HasChisel3 {
 }
 
 object chiselModule extends CrossSbtModule with HasChisel3 with HasChiselTests with HasXsource211 {
-  def crossScalaVersion = "2.12.13"
+  override def millSourcePath = os.pwd
+  def crossScalaVersion = "2.13.10"
+
+  
+  
+  override def scalacPluginIvyDeps = Agg(ivy"cn.ac.ios.tis:::chisel3-plugin:3.7-SNAPSHOT")
+  override def scalacOptions = Seq("-Xsource:2.13", "-P:chiselplugin:genBundleElements") 
   override def moduleDeps = super.moduleDeps ++ Seq(
     difftest
   )

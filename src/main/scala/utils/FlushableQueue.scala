@@ -96,7 +96,8 @@ object FlushableQueue {
       q.io.enq.bits := enq.bits
       q.io.flush := flush
       enq.ready := q.io.enq.ready
-      TransitName(q.io.deq, q)
+      val q.io.deq ={q}
+      q.io.deq
     }
   }
 }

@@ -18,6 +18,7 @@ package utils
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils
 
 class SRAMBundleA(val set: Int) extends Bundle {
   val setIdx = Output(UInt(log2Up(set).W))
@@ -96,19 +97,28 @@ class SRAMTemplate[T <: Data](gen: T, set: Int, way: Int = 1,
 
   val rdata = (if (holdRead) ReadAndHold(array, io.r.req.bits.setIdx, realRen)
                else array.read(io.r.req.bits.setIdx, realRen)).map(_.asTypeOf(gen))
+
   io.r.resp.data := VecInit(rdata)
 
   io.r.req.ready := !resetState && (if (singlePort) !wen else true.B)
   io.w.req.ready := true.B
 
-  Debug(false) {
-    when (wen) {
-      printf("%d: SRAMTemplate: write %x to idx = %d\n", GTimer(), wdata.asUInt, setIdx)
-    }
-    when (RegNext(realRen)) {
-      printf("%d: SRAMTemplate: read %x at idx = %d\n", GTimer(), VecInit(rdata).asUInt, RegNext(io.r.req.bits.setIdx))
-    }
+  // Debug(false) {
+  //   when (wen) {
+  //     printf("%d: SRAMTemplate: write %x to idx = %d\n", GTimer(), wdata.asUInt, setIdx)
+  //   }
+  //   when (RegNext(realRen)) {
+  //     printf("%d: SRAMTemplate: read %x at idx = %d\n", GTimer(), VecInit(rdata).asUInt, RegNext(io.r.req.bits.setIdx))
+  //   }
+  // }
+  
+  // --- modified by yusz
+  val accessArray = Wire(Vec(set, Vec(way, gen)))
+  accessArray.zipWithIndex.map { case (_, i) =>
+    val values = array.read(i.asUInt, true.asBool).map(x => WireInit(x.asTypeOf(gen)))
+    accessArray(i) := VecInit(values)
   }
+  // --- modification ends
 }
 
 class SRAMTemplateWithArbiter[T <: Data](nRead: Int, gen: T, set: Int, way: Int = 1,
@@ -127,6 +137,6 @@ class SRAMTemplateWithArbiter[T <: Data](nRead: Int, gen: T, set: Int, way: Int 
 
   // latch read results
   io.r.map{ case r => {
-    r.resp.data := HoldUnless(ram.io.r.resp.data, RegNext(r.req.fire()))
+    r.resp.data := HoldUnless(ram.io.r.resp.data, RegNext(r.req.fire(), init = false.B))
   }}
 }
