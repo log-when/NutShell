@@ -190,7 +190,7 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   // s2_final_goal: request form s1 will trigger request to s3
   // no deps, can be proven
-  // chaAssert(this, "s1ReqValid |=> F s2ReqValid")
+  chaAssert(this, "s1ReqValid -> F s2ReqValid")
 }
 
 class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule{
@@ -455,6 +455,18 @@ class CachePropSpec extends AnyFlatSpec with ChiselScalatestTester with Formal {
     // verify(new CacheStage3Prop()(new CacheConfig()), Seq(Ic3SaCheck(50), PonoEngineAnnotation, EnSafetyOpti))
     // verify(new CacheStage3Prop, Seq(Ic3SaCheck(50), PonoEngineAnnotation))
   }
+  //   verify(new CacheStage3Prop()(new CacheConfig()), Seq(BoundedCheck(25), PonoEngineAnnotation))
+  //   // verify(new CacheStage3Prop()(new CacheConfig()), Seq(Ic3SaCheck(50), PonoEngineAnnotation, EnSafetyOpti))
+  //   // verify(new CacheStage3Prop, Seq(Ic3SaCheck(50), PonoEngineAnnotation))
+  // }
+
+  // println(new (chisel3.stage.ChiselStage).emitSystemVerilog(new Ic3SaCheck()(new CacheConfig())))
+  // behavior of "CacheStage3"
+  // it should "pass" in {
+  //   verify(new CacheStage3Prop()(new CacheConfig()), Seq(BoundedCheck(25), PonoEngineAnnotation))
+  //   // verify(new CacheStage3Prop()(new CacheConfig()), Seq(Ic3SaCheck(50), PonoEngineAnnotation, EnSafetyOpti))
+  //   // verify(new CacheStage3Prop, Seq(Ic3SaCheck(50), PonoEngineAnnotation))
+  // }
 
   // behavior of "CacheArray"
   // it should "pass" in {
