@@ -275,7 +275,7 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val mmioRespVal = cio.mmio.resp.valid
   // s3_assume_7: handshaking of read request to mmio will utltimately be responsed and handled 
   // restriction for external signal
-  chaAssume(this, "mmioReqFire -> X F F mmioRespVal ")
+  chaAssume(this, "mmioReqFire -> X F mmioRespVal ")
 
   val s2ReqValid = pio.in.valid
   val s2ReqFire = pio.in.fire
