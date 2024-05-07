@@ -54,7 +54,7 @@ class CacheStage1Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val s1ReqValid = cio.out.valid
   // s1_assume_1: request form core will keep high until getting handshake
   // restriction for external signal
-  chaAssume(this,"coreReqValid |-> ((coreReqValid U coreReqFire) || G coreReqValid)")
+  chaAssume(this,"coreReqValid -> ((coreReqValid U coreReqFire) || G coreReqValid)")
 
   val arrayReadReqReady = cio.metaReadBus.req.ready && cio.dataReadBus.req.ready
   // s1_assume_2: if no request to s2, then metaArray and dataArray can eventually be accessed 
@@ -73,7 +73,7 @@ class CacheStage1Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   // s1_final_goal: request form core will trigger request for s2
   // deps on s1_assume_1 and s1_assume_2, can be proven 
-  chaAssert(this,"coreReqValid |-> F s1ReqValid")
+  chaAssert(this,"coreReqValid -> F s1ReqValid")
 }
 
 class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule{
@@ -114,7 +114,7 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val s2ReqFire = s2.io.out.fire()
   // s2_goal_2: request to s3 will keep high until getting handshake
   // no deps, guaranteed by pipeConnect between s1 and s2, can be proven
-  // chaAssert(this, "s2ReqValid |-> ((s2ReqValid U s2ReqFire) || G s2ReqValid)")
+  // chaAssert(this, "s2ReqValid -> ((s2ReqValid U s2ReqFire) || G s2ReqValid)")
 
   val s1ReqFire = pio.in.fire()
   // s2_goal_3: if request from s1 does not make a handshake, there will be no request to s3 or s3 is always unready
@@ -264,7 +264,7 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val s3RespFire = cio.in.resp.fire()
   // s3_assume_5: mem will utltimately be accessed
   // restriction for external
-  chaAssume(this, "s3RespReady |-> X((s3RespReady U s3RespFire) || G s3RespReady)")
+  chaAssume(this, "s3RespReady -> X((s3RespReady U s3RespFire) || G s3RespReady)")
 
   val mmioReqReady = cio.mmio.req.ready
   // s3_assume_6: mmio will utltimately be accessed
@@ -281,7 +281,7 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val s2ReqFire = pio.in.fire
   // s3_assume_8 : request to s3 will keep high until getting handshake
   // verified by s2_goal_2: note that it is an overlapping implication
-  chaAssume(this, "s2ReqValid |-> ((s2ReqValid U s2ReqFire) || G s2ReqValid)")
+  chaAssume(this, "s2ReqValid -> ((s2ReqValid U s2ReqFire) || G s2ReqValid)")
 
   val s3ReqValid = cio.in.resp.valid
   val dataArrayReadReady = cio.dataReadBus.req.ready
