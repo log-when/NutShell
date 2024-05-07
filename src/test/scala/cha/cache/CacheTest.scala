@@ -249,12 +249,12 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val memRespFin = cio.out.mem.resp.bits.isReadLast()
   // s3_assume_2: handshaking of read request to mem will utltimately be responsed and handled 
   // restriction for external signal
-  chaAssume(this, "memReadFire |=> F (memRespVal U (memRespVal && memRespFin))")
+  chaAssume(this, "memReadFire -> X F (memRespVal U (memRespVal && memRespFin))")
 
   val memWriteFire = cio.out.mem.req.bits.cmd === SimpleBusCmd.writeLast & cio.out.mem.req.fire()
   // s3_assume_3: handshaking of write request to mem will utltimately be responsed 
   // restriction for external signal
-  chaAssume(this, "memWriteFire |=> F memRespVal")
+  chaAssume(this, "memWriteFire -> X F memRespVal")
 
   val s3RespReady = cio.in.resp.ready
   // s3_assume_4: handshaking of read request to mem will utltimately be responsed and handled 
@@ -275,7 +275,7 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val mmioRespVal = cio.mmio.resp.valid
   // s3_assume_7: handshaking of read request to mmio will utltimately be responsed and handled 
   // restriction for external signal
-  chaAssume(this, "mmioReqFire |=> F mmioRespVal ")
+  chaAssume(this, "mmioReqFire -> X F F mmioRespVal ")
 
   val s2ReqValid = pio.in.valid
   val s2ReqFire = pio.in.fire
