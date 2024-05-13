@@ -135,11 +135,11 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   // no_deps, can be proven
   // chaAssert(this, "consistIndex")
 
-  val s3IsMmio = s2.io.out.bits.mmio && s2.io.out.valid
+  val s3Mmio = s2.io.out.bits.mmio && s2.io.out.valid
   val reqIsMmio = AddressSpace.isMMIO(s2.io.out.bits.req.addr) && s2.io.out.valid
   // s2_assert_6: s2 will set the mmio-bit true <=> the request is a mmio request 
   // no_deps, can be proven
-  // chaAssert(this, "(!s3IsMmio || reqIsMmio) && (!reqIsMmio || s3IsMmio)")
+  // chaAssert(this, "(!s3Mmio || reqIsMmio) && (!reqIsMmio || s3Mmio)")
 
   val s2ForwardingNotMMIO = !AddressSpace.isMMIO(s2.io.out.bits.req.addr) || !s2ValidHit
   // not restrict index, but it havs no effect
@@ -180,12 +180,12 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   // inducted by s2_assert_7, s3_assert_5, array_assert_3, induction by time
   // chaAssume(this, "metaReadsNotMMIO && metaWriteNotMMIO")
 
-  val s3_mmio = s2.io.out.valid && s2.io.out.bits.mmio
-  val s3_hit = s2.io.out.valid && s2.io.out.bits.hit
+  val s3Mmio = s2.io.out.valid && s2.io.out.bits.mmio
+  val s3Hit = s2.io.out.valid && s2.io.out.bits.hit
   
   // s2_assert_8: all mmio requsts will encounter a cache miss
   // depends on s2_assume_1, can be proven
-  // chaAssert(this, "!s3_mmio || !s3_hit")
+  // chaAssert(this, "!s3Mmio || !s3Hit")
   // --- another layer ends ---//
 
   // s2_goal: request form s1 will trigger request to s3
@@ -261,31 +261,27 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   // restriction for external signal
   chaAssume(this, "F s3RespReady")
 
-  val s3RespFire = cio.in.resp.fire()
-  // s3_assume_5: mem will utltimately be accessed
-  // restriction for external
-  chaAssume(this, "s3RespReady -> X((s3RespReady U s3RespFire) || G s3RespReady)")
 
   val mmioReqReady = cio.mmio.req.ready
-  // s3_assume_6: mmio will utltimately be accessed
+  // s3_assume_5: mmio will utltimately be accessed
   // restriction for external signal
   chaAssume(this, "F mmioReqReady")
 
   val mmioReqFire = cio.mmio.req.fire()
   val mmioRespVal = cio.mmio.resp.valid
-  // s3_assume_7: handshaking of read request to mmio will utltimately be responsed and handled 
+  // s3_assume_6: handshaking of read request to mmio will utltimately be responsed and handled 
   // restriction for external signal
   chaAssume(this, "mmioReqFire -> X F mmioRespVal ")
 
   val s2ReqValid = pio.in.valid
   val s2ReqFire = pio.in.fire
-  // s3_assume_8 : request to s3 will keep high until getting handshake
+  // s3_assume_7 : request to s3 will keep high until getting handshake
   // verified by s2_assert_2: note that it is an overlapping implication
   chaAssume(this, "s2ReqValid -> ((s2ReqValid U s2ReqFire) || G s2ReqValid)")
 
   val s3ReqValid = cio.in.resp.valid
   val dataArrayReadReady = cio.dataReadBus.req.ready
-  // s3_assume_9 : if no request to CPU, then metaArray and dataArray can eventually be accessed 
+  // s3_assume_8 : if no request to CPU, then metaArray and dataArray can eventually be accessed 
   // inducted by s3_assert_3, s2_assert_4, s1_assert_1, s3_assert_4, array_assert_2
   chaAssume(this, "(G !s3ReqValid) -> F G dataArrayReadReady")
   
@@ -295,15 +291,15 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val s2ValidHit = pio.in.valid && pio.in.bits.hit
   val reqTag = pio.in.bits.req.addr.asTypeOf(addrBundle).tag
   val consistIndex = !s2ValidHit || (s2ForwardingTag === reqTag)
-  // s3_assume_10: if request to s3 is valid and the request meets a hit, then the output tag is the same as its in request 
+  // s3_assume_9: if request to s3 is valid and the request meets a hit, then the output tag is the same as its in request 
   // verified in s2_assert_5
   chaAssume(this, "consistIndex")
   
-  val s3IsMmio = pio.in.bits.mmio && pio.in.valid
+  val s3Mmio = pio.in.valid && pio.in.bits.mmio
   val reqIsMmio = AddressSpace.isMMIO(pio.in.bits.req.addr) && pio.in.valid
-  // s3_assume_11: s2 will set the mmio-bit true <=> the request is a mmio request  
+  // s3_assume_10: s2 will set the mmio-bit true <=> the request is a mmio request  
   // verified in s2_assert_6
-  chaAssume(this, "(!s3IsMmio || reqIsMmio) && (!reqIsMmio || s3IsMmio)")
+  chaAssume(this, "(!s3Mmio || reqIsMmio) && (!reqIsMmio || s3Mmio)")
 
   val arrayWriteReqValid = cio.metaWriteBus.req.valid || cio.dataWriteBus.req.valid
   // s3_assert_1: if no request from s2, there will be no request to write metaArray and dataArray
@@ -312,7 +308,7 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   val s2ReqReady = pio.in.ready
   // s3_assert_2: if s3 is always unready, there will be no request to write metaArray and dataArray
-  // depend on: s3_assume_1 ~ s3_assume_4, s3_assume_6, s3_assume_8, can be proven
+  // depend on: s3_assume_1 ~ s3_assume_4, s3_assume_5, s3_assume_7, can be proven
   // chaAssert(this, "(G !s2ReqReady) -> F G !arrayWriteReqValid")
   
   // s3_assert_3: if no response to cpu, s2 and s3 will no be able to make handshake eventually
@@ -336,11 +332,10 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   // --- another layer begins ---//
   // this assumption is conducted by some assertions in this stage before
-  val s3_mmio = pio.in.valid && pio.in.bits.mmio
-  val s3_hit = pio.in.valid && pio.in.bits.hit
-  // s3_assume_12: all mmio requsts will encounter a cache miss
+  val s3Hit = pio.in.valid && pio.in.bits.hit
+  // s3_assume_11: all mmio requsts will encounter a cache miss
   // verified in s2_assert_8
-  chaAssume(this, "!s3_mmio || !s3_hit")
+  chaAssume(this, "!s3Mmio || !s3Hit")
   
   // s3_goal: request form s2 will trigger response to cpu
   // depend on the all assume statement (in)directly
@@ -383,7 +378,7 @@ class CacheArrayProp(implicit val cacheConfig: CacheConfig) extends CacheModule{
   val dataArrayReadReady = cio.s3_dataReadBus.req.ready
   // array_assert_2: 
   // no deps, can be proven 
-  // chaAssert(this, "(G !dataArrayReadValid & !arrayWriteReqValid) -> F G dataArrayReadReady")
+  // chaAssert(this, "(G !dataArrayReadValid && !arrayWriteReqValid) -> F G dataArrayReadReady")
 
   val metaWriteValid = cio.s3_metaWriteBus.req.valid
   val metaWriteTag = cio.s3_metaWriteBus.req.bits.data.tag
