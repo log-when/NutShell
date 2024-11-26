@@ -49,6 +49,7 @@ class CacheStage1Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   s1.io.out <> cio.out
 
   // ---------------- generate aux signals and write assumptions/assertions ----------------
+  // testcase 10:
   val cpuReqValid = aio.in.valid
   val coreReqFire = aio.in.fire()
   val s1ReqValid = cio.out.valid
@@ -73,7 +74,9 @@ class CacheStage1Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   // s1_goal: request form core will trigger request for s2
   // deps on s1_assume_1 and s1_assume_2, can be proven 
-  chaAssert(this,"cpuReqValid -> F s1ReqValid")
+  // chaAssert(this,"cpuReqValid -> F s1ReqValid")
+
+  chaAssert(this, "s1ReqFire && !s1ReqFire")
 }
 
 class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule{
@@ -107,6 +110,8 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val s1ReqValid = pio.in.valid
   val s2ReqValid = s2.io.out.valid
   val s2ReqReady = s2.io.out.ready
+
+  // testcase 9: s2_assert_1- s2_assert_5
   // s2_assert_1: if no request from s1, there will be no request to s3 or s3 is always unready
   // no deps, can be proven
   // chaAssert(this, "(G !s1ReqValid) -> ((F G !s2ReqValid) || G !s2ReqReady)")
@@ -164,15 +169,12 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
   val metaWriteAddr = Cat(metaWriteTag, metaWriteIndex, 0.U(OffsetBits.W))
   val metaWriteNotMMIO = !AddressSpace.isMMIO(metaWriteAddr) || !metaWriteValid
 
+  // testcase 11
   // s2_assert_7: if mmio data will not be read or written to the cacheArray for k cyles from the beginning,
   //            then all valid mmio requsets will encounter a cache miss at the kth cyle
   // no_deps, can be proven
-  chaAssert(this, "!((metaReadsNotMMIO && metaWriteNotMMIO) U (!s2ForwardingNotMMIO  && (metaReadsNotMMIO && metaWriteNotMMIO)))", true)
+  chaAssert(this, "!((metaReadsNotMMIO && metaWriteNotMMIO) U (!s2ForwardingNotMMIO  && (metaReadsNotMMIO && metaWriteNotMMIO)))")
   
-  //--- experimental ---/
-  // chaAssert(this, "!((metaReadsNotMMIO && metaWriteNotMMIO) U (!s2ForwardingNotMMIO  && metaWriteNotMMIO ))", true)
-  // chaAssert(this, " (s2ForwardingNotMMIO  || !metaReadsNotMMIO || !metaWriteNotMMIO)", true)
-  //--- experimental ---/
 
   // --- another layer begins ---//
   // this assumption is conducted by some assertions in this stage before
@@ -189,7 +191,7 @@ class CacheStage2Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   // s2_goal: request form s1 will trigger request to s3
   // no deps, can be proven
-  chaAssert(this, "s1ReqValid -> F s2ReqValid")
+  // chaAssert(this, "s1ReqValid -> F s2ReqValid")
 }
 
 class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule{
@@ -327,19 +329,21 @@ class CacheStage3Prop(implicit val cacheConfig: CacheConfig) extends CacheModule
 
   // s3_assert_5: if all valid mmio requsets will encounter a cache miss  for k cyles from the beginning,
   //            then  mmio data will not be written to the cacheArray at the kth cyle
-  // chaAssert(this, "!(s2ForwardingNotMMIO U ! metaWriteNotMMIO)", true)
+  chaAssert(this, "!(s2ForwardingNotMMIO U ! metaWriteNotMMIO)", true)
 
   // --- another layer begins ---//
   // this assumption is conducted by some assertions in this stage before
   val s3Hit = pio.in.valid && pio.in.bits.hit
   // s3_assume_11: all mmio requsts will encounter a cache miss
   // verified in s2_assert_8
-  // chaAssume(this, "!s3Mmio || !s3Hit")
+  chaAssume(this, "!s3Mmio || !s3Hit")
   
   // s3_goal: request form s2 will trigger response to cpu
   // depend on the all assume statement (in)directly
   chaAssert(this, "s2ReqValid -> F cpuRespValid")
   // --- another layer ends ---//
+
+
 }
 
 class CacheArrayProp(implicit val cacheConfig: CacheConfig) extends CacheModule{
@@ -407,8 +411,8 @@ class CacheArrayProp(implicit val cacheConfig: CacheConfig) extends CacheModule{
 
   // array_assert_3: if input follows that there is no write with mmio addr, then the result of read request is not about mmio
   // no deps, can be proven ()
-  // chaAssert(this, "!(metaWriteNotMMIO U !metaReadsNotMMIO)", true)
-  chaAssert(this, "!(metaWriteNotMMIO U metaReadsNotMMIO)", true)
+  chaAssert(this, "!(metaWriteNotMMIO U !metaReadsNotMMIO)", true)
+  // chaAssert(this, "!(metaWriteNotMMIO U metaReadsNotMMIO)", true)
 
   // --- modified by yusz
   // dontTouch(metaWriteNotMMIO)
@@ -449,15 +453,25 @@ class CachePropSpec extends AnyFlatSpec with ChiselScalatestTester with Formal {
 
   // println(new (chisel3.stage.ChiselStage).emitSystemVerilog(new CacheStage1Prop()))
   
+  // testcase 10:
   // behavior of "CacheStage1"
   // it should "pass" in {
-  //   verify(new CacheStage1Prop()(new CacheConfig()), Seq(Ic3SaCheck(20), PonoEngineAnnotation))
+  //   verify(new CacheStage1Prop()(new CacheConfig()), Seq(BoundedCheck(20), PonoEngineAnnotation))
+  //   // verify(new CacheStage1Prop()(new CacheConfig()), Seq(Ic3SaCheck(20), PonoEngineAnnotation))
   // }
 
+  // testcase 9:
   // behavior of "CacheStage2"
   // it should "pass" in {
-  //   verify(new CacheStage2Prop()(new CacheConfig()), Seq(Ic3SaCheck(50), PonoEngineAnnotation))
+  //   verify(new CacheStage2Prop()(new CacheConfig()), Seq(Ic3SaCheck(20), PonoEngineAnnotation))
   // }
+
+  //testcase 11
+  behavior of "CacheStage2"
+  it should "pass" in {
+    // verify(new CacheStage2Prop()(new CacheConfig()), Seq(Ic3SaCheck(20), PonoEngineAnnotation))
+    verify(new CacheStage2Prop()(new CacheConfig()), Seq(BoundedCheck(20), PonoEngineAnnotation))
+  }
 
   // behavior of "CacheStage3"
   // it should "pass" in {
@@ -470,18 +484,19 @@ class CachePropSpec extends AnyFlatSpec with ChiselScalatestTester with Formal {
   //   // verify(new CacheStage3Prop, Seq(Ic3SaCheck(50), PonoEngineAnnotation))
   // }
 
-  // println(new (chisel3.stage.ChiselStage).emitSystemVerilog(new Ic3SaCheck()(new CacheConfig())))
+  // println(new (chisel3.stage.ChiselStage).emitSystemVerilog(new CacheStage3PropP()))
   // behavior of "CacheStage3"
   // it should "pass" in {
-  //   verify(new CacheStage3Prop()(new CacheConfig()), Seq(BoundedCheck(25), PonoEngineAnnotation))
+  //   verify(new CacheStage3Prop()(new CacheConfig()), Seq(BoundedCheck(25), PonoEngineAnnotation，))
   //   // verify(new CacheStage3Prop()(new CacheConfig()), Seq(Ic3SaCheck(50), PonoEngineAnnotation, EnSafetyOpti))
   //   // verify(new CacheStage3Prop, Seq(Ic3SaCheck(50), PonoEngineAnnotation))
   // }
 
-  behavior of "CacheArray"
-  it should "pass" in {
-    verify(new CacheArrayProp()(new CacheConfig()), Seq(BoundedCheck(100), PonoEngineAnnotation, EnSafetyOpti))
-  }
+
+  // behavior of "CacheArray"
+  // it should "pass" in {
+  //   verify(new CacheArrayProp()(new CacheConfig()), Seq(BoundedCheck(100), PonoEngineAnnotation, EnSafetyOpti))
+  // }
 
   // behavior of "CacheSafetyCheck"
   // it should "pass" in {
